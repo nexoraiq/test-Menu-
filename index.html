@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مطعم الأصالة - القائمة الرقمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital@1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dark: #9C7A2E;
+      --cream: #FAF6F0;
+      --warm-white: #FFFDF9;
+      --brown-light: #8B6914;
+      --text-dark: #1A1208;
+      --text-medium: #4A3728;
+      --text-light: #7A6251;
+      --border-light: #EDE4D3;
+      --shadow-gold: rgba(201,168,76,0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: var(--cream);
+      color: var(--text-dark);
+      direction: rtl;
+      overflow-x: hidden;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+
+    /* ===== PAGES ===== */
+    .page { display: none; min-height: 100vh; }
+    .page.active { display: block; }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--text-dark); color: #fff; padding: 12px 28px;
+      border-radius: 50px; font-size: 14px; font-weight: 600; z-index: 9999;
+      transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), opacity 0.4s;
+      opacity: 0; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    #toast.error { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    #toast.info { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); }
+
+    /* ===== HEADER ===== */
+    .menu-header {
+      background: linear-gradient(160deg, #1A1208 0%, #2D1F0A 40%, #3D2B10 100%);
+      position: relative; overflow: hidden;
+    }
+    .menu-header::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.25) 0%, transparent 70%);
+    }
+    .menu-header::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .arabic-pattern {
+      position: absolute; inset: 0; opacity: 0.04;
+      background-image: repeating-linear-gradient(45deg, var(--gold) 0, var(--gold) 1px, transparent 0, transparent 50%);
+      background-size: 20px 20px;
+    }
+    .logo-ring {
+      width: 100px; height: 100px; border-radius: 50%;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 0 6px rgba(201,168,76,0.1), 0 0 40px rgba(201,168,76,0.2);
+      background: rgba(201,168,76,0.08);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .logo-inner {
+      font-size: 42px; line-height: 1;
+      filter: drop-shadow(0 2px 8px rgba(201,168,76,0.5));
+    }
+    .restaurant-name {
+      font-size: clamp(26px, 6vw, 42px);
+      font-weight: 900; color: #fff; letter-spacing: 1px;
+      text-shadow: 0 2px 20px rgba(201,168,76,0.3);
+    }
+    .restaurant-tagline {
+      color: var(--gold-light); font-size: 14px; font-weight: 400; letter-spacing: 2px;
+    }
+    .gold-divider {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .gold-divider::before, .gold-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .gold-star { color: var(--gold); font-size: 14px; }
+
+    /* ===== SEARCH BAR ===== */
+    .search-container {
+      background: var(--warm-white);
+      border-bottom: 1px solid var(--border-light);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    .search-input-wrap {
+      position: relative;
+    }
+    .search-input {
+      width: 100%; padding: 14px 48px 14px 20px;
+      border: 1.5px solid var(--border-light); border-radius: 14px;
+      background: var(--cream); font-family: 'Cairo', sans-serif;
+      font-size: 15px; color: var(--text-dark); outline: none;
+      transition: all 0.3s ease;
+    }
+    .search-input:focus {
+      border-color: var(--gold); background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+    .search-icon {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--gold); font-size: 18px; pointer-events: none;
+    }
+    .search-clear {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--text-light); font-size: 18px; cursor: pointer; display: none;
+      background: none; border: none; padding: 2px;
+    }
+
+    /* ===== CATEGORY TABS ===== */
+    .categories-wrap {
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .categories-wrap::-webkit-scrollbar { display: none; }
+    .category-btn {
+      flex-shrink: 0; padding: 9px 20px;
+      border-radius: 50px; border: 1.5px solid var(--border-light);
+      background: transparent; font-family: 'Cairo', sans-serif;
+      font-size: 14px; font-weight: 600; color: var(--text-medium);
+      cursor: pointer; transition: all 0.3s ease; white-space: nowrap;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .category-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .category-btn.active {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 16px var(--shadow-gold);
+    }
+    .cat-emoji { font-size: 16px; }
+
+    /* ===== SECTION TITLE ===== */
+    .section-title {
+      font-size: 22px; font-weight: 800; color: var(--text-dark);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1.5px;
+      background: linear-gradient(90deg, var(--gold-light), transparent);
+    }
+
+    /* ===== PRODUCT CARDS ===== */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: #fff; border-radius: 20px;
+      border: 1px solid var(--border-light);
+      overflow: hidden; transition: all 0.35s cubic-bezier(.25,.8,.25,1);
+      cursor: pointer; position: relative;
+    }
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.1), 0 0 0 1px var(--gold-light);
+    }
+    .product-card.hidden { display: none; }
+    .product-img-wrap {
+      position: relative; overflow: hidden; height: 200px;
+    }
+    .product-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .product-card:hover .product-img { transform: scale(1.07); }
+    .product-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #fff; font-size: 11px; font-weight: 700;
+      padding: 4px 12px; border-radius: 50px;
+      box-shadow: 0 4px 12px var(--shadow-gold);
+    }
+    .product-body { padding: 18px; }
+    .product-name {
+      font-size: 17px; font-weight: 800; color: var(--text-dark);
+      margin-bottom: 6px; line-height: 1.4;
+    }
+    .product-desc {
+      font-size: 13px; color: var(--text-light); line-height: 1.7;
+      margin-bottom: 14px; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .product-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .product-price {
+      font-size: 20px; font-weight: 900; color: var(--gold-dark);
+      display: flex; align-items: baseline; gap: 4px;
+    }
+    .product-price span { font-size: 13px; font-weight: 600; color: var(--text-light); }
+    .no-results {
+      text-align: center; padding: 60px 20px; color: var(--text-light);
+    }
+    .no-results-icon { font-size: 60px; margin-bottom: 16px; opacity: 0.5; }
+    .no-results-text { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px); z-index: 1000;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #fff; border-radius: 28px 28px 0 0;
+      width: 100%; max-width: 560px; max-height: 90vh;
+      overflow-y: auto; padding: 0;
+      transform: translateY(100%); transition: transform 0.4s cubic-bezier(.34,1.2,.64,1);
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0); }
+    .modal-img { width: 100%; height: 260px; object-fit: cover; }
+    .modal-content { padding: 24px; }
+    .modal-name { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+    .modal-cat-badge {
+      display: inline-block; background: var(--cream); color: var(--gold-dark);
+      border: 1px solid var(--gold-light); border-radius: 50px;
+      font-size: 12px; font-weight: 700; padding: 4px 14px; margin-bottom: 14px;
+    }
+    .modal-desc { font-size: 15px; color: var(--text-medium); line-height: 1.8; margin-bottom: 20px; }
+    .modal-price-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0; border-top: 1px solid var(--border-light);
+    }
+    .modal-price { font-size: 28px; font-weight: 900; color: var(--gold-dark); }
+    .modal-close {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: flex-end; padding: 16px 16px 0;
+      background: transparent; pointer-events: none;
+    }
+    .modal-close-btn {
+      background: rgba(0,0,0,0.5); border: none; border-radius: 50%;
+      width: 36px; height: 36px; color: #fff; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      pointer-events: all; transition: background 0.2s;
+    }
+    .modal-close-btn:hover { background: rgba(0,0,0,0.8); }
+
+    /* ===== ADMIN PANEL ===== */
+    .admin-sidebar {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 260px;
+      background: linear-gradient(180deg, #1A1208 0%, #2D1F0A 100%);
+      z-index: 200; transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(.25,.8,.25,1);
+      display: flex; flex-direction: column;
+      box-shadow: -8px 0 40px rgba(0,0,0,0.3);
+    }
+    .admin-sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px); z-index: 199; display: none;
+    }
+    .sidebar-overlay.open { display: block; }
+    .sidebar-logo {
+      padding: 28px 24px 20px; border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+    .sidebar-logo-text { color: #fff; font-size: 18px; font-weight: 800; margin-top: 8px; }
+    .sidebar-logo-sub { color: var(--gold-light); font-size: 11px; font-weight: 400; }
+    .sidebar-menu { flex: 1; padding: 16px 0; overflow-y: auto; }
+    .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 700;
+      color: rgba(201,168,76,0.5); letter-spacing: 2px; text-transform: uppercase; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.75);
+      cursor: pointer; transition: all 0.2s; font-size: 14px; font-weight: 600;
+      border: none; background: none; width: 100%; text-align: right;
+      font-family: 'Cairo', sans-serif; border-radius: 0;
+    }
+    .sidebar-item:hover, .sidebar-item.active {
+      background: rgba(201,168,76,0.12); color: var(--gold-light);
+    }
+    .sidebar-item.active { border-right: 3px solid var(--gold); }
+    .sidebar-item-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* ===== ADMIN TOPBAR ===== */
+    .admin-topbar {
+      background: #fff; border-bottom: 1px solid var(--border-light);
+      padding: 16px 20px; position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .hamburger-btn {
+      background: var(--cream); border: 1px solid var(--border-light);
+      border-radius: 10px; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; transition: all 0.2s;
+    }
+    .hamburger-btn:hover { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+    /* ===== ADMIN CARDS ===== */
+    .stat-card {
+      background: #fff; border-radius: 16px; padding: 20px;
+      border: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
+    .stat-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .stat-value { font-size: 28px; font-weight: 900; color: var(--text-dark); line-height: 1; }
+    .stat-label { font-size: 13px; color: var(--text-light); font-weight: 500; margin-top: 2px; }
+
+    /* ===== FORMS ===== */
+    .form-card {
+      background: #fff; border-radius: 20px; padding: 28px;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .form-title {
+      font-size: 18px; font-weight: 800; color: var(--text-dark);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+    }
+    .form-title-icon {
+      width: 36px; height: 36px; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 700; color: var(--text-medium);
+      margin-bottom: 6px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border-light); border-radius: 12px;
+      background: var(--cream); font-family: 'Cairo', sans-serif;
+      font-size: 14px; color: var(--text-dark); outline: none;
+      transition: all 0.3s; direction: rtl;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--gold); background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+    .form-textarea { resize: vertical; min-height: 90px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ===== UPLOAD AREA ===== */
+    .upload-area {
+      border: 2px dashed var(--border-light); border-radius: 14px;
+      padding: 28px 20px; text-align: center; cursor: pointer;
+      transition: all 0.3s; background: var(--cream);
+    }
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: var(--gold); background: rgba(201,168,76,0.05);
+    }
+    .upload-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.6; }
+    .upload-text { font-size: 14px; color: var(--text-medium); font-weight: 600; }
+    .upload-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+    .upload-preview { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; }
+    .upload-area.uploading { cursor: wait; opacity: 0.85; }
+
+    /* ===== UPLOAD PROGRESS ===== */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-progress-track {
+      width: 100%; height: 8px; border-radius: 50px; overflow: hidden;
+      background: var(--border-light);
+    }
+    .upload-progress-bar {
+      height: 100%; width: 0%; border-radius: 50px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      transition: width 0.25s ease;
+    }
+    .upload-progress-text {
+      font-size: 12px; color: var(--text-light); font-weight: 600;
+      margin-top: 6px; text-align: center;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #fff; border: none; border-radius: 12px; padding: 13px 28px;
+      font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.3s; display: flex; align-items: center;
+      justify-content: center; gap: 8px; width: 100%;
+      box-shadow: 0 4px 16px var(--shadow-gold);
+    }
+    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--shadow-gold); filter: brightness(1.05); }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-outline {
+      background: transparent; color: var(--text-medium);
+      border: 1.5px solid var(--border-light); border-radius: 10px;
+      padding: 9px 16px; font-family: 'Cairo', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-danger {
+      background: #fff0f0; color: #e53e3e; border: 1.5px solid #fcd5d5;
+      border-radius: 10px; padding: 9px 16px; font-family: 'Cairo', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-danger:hover { background: #e53e3e; color: #fff; border-color: #e53e3e; }
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+
+    /* ===== ADMIN PRODUCT TABLE ===== */
+    .admin-product-card {
+      background: #fff; border-radius: 16px; border: 1px solid var(--border-light);
+      overflow: hidden; transition: all 0.2s;
+    }
+    .admin-product-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
+    .admin-product-img {
+      width: 72px; height: 72px; object-fit: cover; border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .admin-product-name { font-size: 15px; font-weight: 700; color: var(--text-dark); }
+    .admin-product-cat { font-size: 12px; color: var(--text-light); font-weight: 500; }
+    .admin-product-price { font-size: 16px; font-weight: 800; color: var(--gold-dark); }
+
+    /* ===== CATEGORY MANAGE ===== */
+    .cat-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--cream); border: 1px solid var(--border-light);
+      border-radius: 50px; padding: 8px 16px; font-size: 14px; font-weight: 600;
+      color: var(--text-dark); transition: all 0.2s;
+    }
+    .cat-chip:hover { border-color: var(--gold); }
+    .cat-chip-emoji { font-size: 18px; }
+    .cat-chip-del {
+      background: none; border: none; cursor: pointer;
+      color: #ccc; font-size: 16px; padding: 0; line-height: 1;
+      transition: color 0.2s; margin-right: 4px;
+    }
+    .cat-chip-del:hover { color: #e53e3e; }
+
+    /* ===== EDIT MODAL ===== */
+    .edit-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(3px); z-index: 500;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .edit-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .edit-modal-box {
+      background: #fff; border-radius: 24px; padding: 28px;
+      width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      transform: scale(0.92); transition: transform 0.35s cubic-bezier(.34,1.2,.64,1);
+    }
+    .edit-modal-overlay.open .edit-modal-box { transform: scale(1); }
+
+    /* ===== CONFIRM MODAL ===== */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(3px); z-index: 600;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .confirm-overlay.open { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      background: #fff; border-radius: 22px; padding: 32px;
+      width: 100%; max-width: 360px; text-align: center;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.35s cubic-bezier(.34,1.2,.64,1);
+    }
+    .confirm-overlay.open .confirm-box { transform: scale(1) translateY(0); }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes shimmer { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+    .animate-fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .stagger-4 { animation-delay: 0.2s; }
+    .stagger-5 { animation-delay: 0.25s; }
+
+    /* ===== NAV TOGGLE ===== */
+    .nav-toggle {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      display: flex; background: var(--text-dark); border-radius: 50px;
+      padding: 6px; gap: 4px; z-index: 50;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .nav-btn {
+      padding: 10px 22px; border-radius: 50px; border: none; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+      transition: all 0.3s; color: rgba(255,255,255,0.6); background: transparent;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-btn.active { background: var(--gold); color: #fff; box-shadow: 0 4px 16px var(--shadow-gold); }
+
+    /* ===== FOOTER ===== */
+    .menu-footer {
+      background: var(--text-dark); color: rgba(255,255,255,0.5);
+      text-align: center; padding: 24px 20px; font-size: 13px;
+    }
+    .menu-footer span { color: var(--gold); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .products-grid { grid-template-columns: 1fr; }
+      .admin-sidebar { width: 100%; max-width: 280px; }
+    }
+    @media (min-width: 768px) {
+      .admin-layout { display: grid; grid-template-columns: 260px 1fr; }
+      .admin-sidebar {
+        position: sticky; top: 0; height: 100vh;
+        transform: none !important; box-shadow: none;
+      }
+      .sidebar-overlay { display: none !important; }
+      .hamburger-btn { display: none; }
+    }
+
+    /* ===== ADMIN TABS ===== */
+    .admin-tab-btn {
+      padding: 10px 20px; border: none; background: transparent;
+      font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .admin-tab-btn.active { color: var(--gold-dark); border-bottom-color: var(--gold); }
+
+    .admin-panel-section { display: none; }
+    .admin-panel-section.active { display: block; }
+
+    /* ===== IMAGE EMOJI FALLBACK ===== */
+    .img-fallback {
+      width: 100%; height: 100%; display: flex; align-items: center;
+      justify-content: center; font-size: 60px; background: var(--cream);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========================== TOAST ========================== -->
+<div id="toast"></div>
+
+<!-- ========================== MENU PAGE ========================== -->
+<div id="page-menu" class="page active">
+
+  <!-- Header -->
+  <header class="menu-header py-10 px-4">
+    <div class="arabic-pattern"></div>
+    <div class="relative z-10 max-w-2xl mx-auto text-center">
+      <!-- Logo -->
+      <div class="flex justify-center mb-5">
+        <div class="logo-ring">
+          <span class="logo-inner">🍽️</span>
+        </div>
+      </div>
+      <!-- Name -->
+      <h1 class="restaurant-name mb-2">مطعم الأصالة</h1>
+      <!-- Divider -->
+      <div class="gold-divider mb-3 max-w-xs mx-auto">
+        <span class="gold-star">✦</span>
+        <span class="restaurant-tagline">أصالة الطعم • روعة الضيافة</span>
+        <span class="gold-star">✦</span>
+      </div>
+      <!-- Info -->
+      <div class="flex items-center justify-center gap-6 mt-4">
+        <div class="flex items-center gap-2 text-sm" style="color:rgba(255,255,255,0.6)">
+          <span>📍</span><span>الرياض، المملكة العربية السعودية</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm" style="color:rgba(255,255,255,0.6)">
+          <span>⏰</span><span>٩ص – ١٢م</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search & Categories -->
+  <div class="search-container px-4 py-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Search -->
+      <div class="search-input-wrap mb-4">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن طبقك المفضل..." />
+        <button class="search-clear" id="searchClear">✕</button>
+      </div>
+      <!-- Categories -->
+      <div class="categories-wrap">
+        <div class="flex gap-2 pb-1" id="categoryTabsMenu"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products -->
+  <main class="max-w-2xl mx-auto px-4 py-6" style="padding-bottom: 100px;">
+    <div id="menuSections"></div>
+    <div id="noResults" class="no-results" style="display:none">
+      <div class="no-results-icon">🔍</div>
+      <div class="no-results-text">لا توجد نتائج</div>
+      <div style="font-size:14px">جرّب البحث بكلمات مختلفة</div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="menu-footer" style="padding-bottom:90px">
+    <p>جميع الأسعار بالريال السعودي <span>﷼</span></p>
+    <p class="mt-1">صُنع بـ <span>❤</span> في مطعم الأصالة</p>
+  </footer>
+
+</div>
+<!-- END MENU PAGE -->
+
+<!-- ========================== ADMIN PAGE ========================== -->
+<div id="page-admin" class="page">
+  <div class="admin-layout min-h-screen" style="background:var(--cream)">
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-logo">
+        <div class="text-2xl">🍽️</div>
+        <div class="sidebar-logo-text">لوحة التحكم</div>
+        <div class="sidebar-logo-sub">مطعم الأصالة</div>
+      </div>
+      <nav class="sidebar-menu">
+        <div class="sidebar-section">الإدارة</div>
+        <button class="sidebar-item active" onclick="showAdminTab('dashboard')" id="tab-btn-dashboard">
+          <span class="sidebar-item-icon">📊</span> نظرة عامة
+        </button>
+        <button class="sidebar-item" onclick="showAdminTab('products')" id="tab-btn-products">
+          <span class="sidebar-item-icon">🍽️</span> إدارة المنتجات
+        </button>
+        <button class="sidebar-item" onclick="showAdminTab('add')" id="tab-btn-add">
+          <span class="sidebar-item-icon">➕</span> إضافة منتج
+        </button>
+        <button class="sidebar-item" onclick="showAdminTab('categories')" id="tab-btn-categories">
+          <span class="sidebar-item-icon">🏷️</span> الأقسام
+        </button>
+        <div class="sidebar-section" style="margin-top:16px">التنقل</div>
+        <button class="sidebar-item" onclick="switchPage('menu')">
+          <span class="sidebar-item-icon">👁️</span> عرض القائمة
+        </button>
+      </nav>
+      <div style="padding:16px 24px; border-top:1px solid rgba(201,168,76,0.15); font-size:12px; color:rgba(255,255,255,0.3)">
+        v1.0 • مطعم الأصالة
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+
+      <!-- Top Bar -->
+      <div class="admin-topbar">
+        <button class="hamburger-btn" onclick="toggleSidebar()" id="hamburgerBtn">☰</button>
+        <div style="font-size:17px; font-weight:800; color:var(--text-dark)">لوحة التحكم</div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:16px">👨‍🍳</div>
+        </div>
+      </div>
+
+      <!-- Admin Content -->
+      <div class="flex-1 p-4 md:p-6" style="max-width:860px; margin:0 auto; width:100%; padding-bottom:40px;">
+
+        <!-- === DASHBOARD TAB === -->
+        <div class="admin-panel-section active" id="tab-dashboard">
+          <h2 class="text-xl font-bold mb-5" style="color:var(--text-dark)">نظرة عامة 📊</h2>
+          <!-- Stats -->
+          <div class="grid grid-cols-2 gap-4 mb-6" id="statsGrid">
+            <div class="stat-card animate-fade-in-up stagger-1">
+              <div class="stat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)">🍽️</div>
+              <div>
+                <div class="stat-value" id="statProducts">0</div>
+                <div class="stat-label">المنتجات</div>
+              </div>
+            </div>
+            <div class="stat-card animate-fade-in-up stagger-2">
+              <div class="stat-icon" style="background:linear-gradient(135deg,var(--gold),var(--gold-dark))">🏷️</div>
+              <div>
+                <div class="stat-value" id="statCats">0</div>
+                <div class="stat-label">الأقسام</div>
+              </div>
+            </div>
+            <div class="stat-card animate-fade-in-up stagger-3">
+              <div class="stat-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)">⭐</div>
+              <div>
+                <div class="stat-value" id="statFeatured">0</div>
+                <div class="stat-label">مميز</div>
+              </div>
+            </div>
+            <div class="stat-card animate-fade-in-up stagger-4">
+              <div class="stat-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">💰</div>
+              <div>
+                <div class="stat-value" id="statAvgPrice">0</div>
+                <div class="stat-label">متوسط السعر</div>
+              </div>
+            </div>
+          </div>
+          <!-- Recent products -->
+          <div class="form-card">
+            <div class="form-title"><div class="form-title-icon">🕐</div> آخر المنتجات المضافة</div>
+            <div id="recentProducts"></div>
+          </div>
+        </div>
+
+        <!-- === PRODUCTS TAB === -->
+        <div class="admin-panel-section" id="tab-products">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-xl font-bold" style="color:var(--text-dark)">إدارة المنتجات</h2>
+            <button class="btn-gold" style="width:auto;padding:10px 18px;font-size:13px" onclick="showAdminTab('add')">
+              ➕ إضافة
+            </button>
+          </div>
+          <!-- Filter -->
+          <div class="mb-4">
+            <select class="form-select" id="adminCatFilter" onchange="renderAdminProducts()">
+              <option value="all">جميع الأقسام</option>
+            </select>
+          </div>
+          <div id="adminProductsList"></div>
+        </div>
+
+        <!-- === ADD PRODUCT TAB === -->
+        <div class="admin-panel-section" id="tab-add">
+          <div class="form-card">
+            <div class="form-title"><div class="form-title-icon">➕</div> <span id="addFormTitle">إضافة منتج جديد</span></div>
+            <form id="productForm" onsubmit="submitProduct(event)">
+              <input type="hidden" id="editProductId" value="" />
+
+              <!-- Image Upload -->
+              <div class="form-group">
+                <label class="form-label">صورة المنتج</label>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                  <div id="uploadPlaceholder">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">اضغط لرفع صورة</div>
+                    <div class="upload-sub">أو اسحب الصورة هنا • JPG, PNG, WEBP</div>
+                  </div>
+                  <img id="uploadPreview" class="upload-preview" style="display:none" alt="معاينة" />
+                  <div class="upload-progress" id="uploadProgress">
+                    <div class="upload-progress-track"><div class="upload-progress-bar" id="uploadProgressBar"></div></div>
+                    <div class="upload-progress-text" id="uploadProgressText">جارٍ الرفع... 0%</div>
+                  </div>
+                </div>
+                <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
+                <!-- URL fallback -->
+                <div class="mt-2">
+                  <input type="text" id="imageUrlInput" class="form-input" placeholder="أو أدخل رابط الصورة مباشرة..." oninput="handleImageUrl(this.value)" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">اسم المنتج *</label>
+                  <input type="text" id="pName" class="form-input" placeholder="مثال: كبسة لحم" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">السعر (﷼) *</label>
+                  <input type="number" id="pPrice" class="form-input" placeholder="٠" min="0" step="0.5" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">الوصف</label>
+                <textarea id="pDesc" class="form-textarea" placeholder="وصف مختصر للمنتج..."></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">القسم *</label>
+                  <select id="pCat" class="form-select" required>
+                    <option value="">اختر القسم</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">الوسم</label>
+                  <input type="text" id="pBadge" class="form-input" placeholder="مثال: الأكثر طلباً" />
+                </div>
+              </div>
+
+              <div class="flex gap-3 mt-2">
+                <button type="submit" class="btn-gold">
+                  <span id="submitBtnIcon">✅</span> <span id="submitBtnText">إضافة المنتج</span>
+                </button>
+                <button type="button" class="btn-outline" onclick="resetForm()" style="width:auto;padding:13px 20px">
+                  🔄 إعادة تعيين
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- === CATEGORIES TAB === -->
+        <div class="admin-panel-section" id="tab-categories">
+          <h2 class="text-xl font-bold mb-5" style="color:var(--text-dark)">إدارة الأقسام 🏷️</h2>
+          <!-- Add Category -->
+          <div class="form-card mb-6">
+            <div class="form-title"><div class="form-title-icon">➕</div> إضافة قسم جديد</div>
+            <div class="form-row" style="grid-template-columns:80px 1fr auto; align-items:flex-end; gap:12px">
+              <div class="form-group" style="margin:0">
+                <label class="form-label">الأيقونة</label>
+                <input type="text" id="newCatEmoji" class="form-input" placeholder="🍽️" maxlength="4" style="text-align:center;font-size:22px" />
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">اسم القسم *</label>
+                <input type="text" id="newCatName" class="form-input" placeholder="مثال: مشويات" />
+              </div>
+              <button class="btn-gold" style="width:auto;margin-bottom:0;padding:12px 20px" onclick="addCategory()">إضافة</button>
+            </div>
+          </div>
+          <!-- Categories List -->
+          <div class="form-card">
+            <div class="form-title"><div class="form-title-icon">📋</div> الأقسام الحالية</div>
+            <div id="categoriesList" class="flex flex-wrap gap-3"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END ADMIN PAGE -->
+
+<!-- ========================== NAV TOGGLE ========================== -->
+<div class="nav-toggle">
+  <button class="nav-btn active" id="navMenu" onclick="switchPage('menu')">🍽️ القائمة</button>
+  <button class="nav-btn" id="navAdmin" onclick="switchPage('admin')">⚙️ الإدارة</button>
+</div>
+
+<!-- ========================== PRODUCT MODAL ========================== -->
+<div class="modal-overlay" id="productModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-close">
+      <button class="modal-close-btn" onclick="closeProductModal()">✕</button>
+    </div>
+    <img id="modalImg" class="modal-img" src="" alt="" />
+    <div class="modal-content">
+      <div id="modalCatBadge" class="modal-cat-badge"></div>
+      <h2 class="modal-name" id="modalName"></h2>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-price-row">
+        <div>
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:2px">السعر</div>
+          <div class="modal-price" id="modalPrice"></div>
+        </div>
+        <div id="modalBadge" class="product-badge" style="position:relative;top:auto;right:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================== EDIT MODAL ========================== -->
+<div class="edit-modal-overlay" id="editModal">
+  <div class="edit-modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <div class="form-title" style="margin:0"><div class="form-title-icon">✏️</div> تعديل المنتج</div>
+      <button onclick="closeEditModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-light)">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">صورة المنتج</label>
+      <div class="upload-area" id="editUploadArea" onclick="document.getElementById('editImageFile').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleEditDrop(event)">
+        <div id="editUploadPlaceholder" style="display:none">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">اضغط لتغيير الصورة</div>
+        </div>
+        <img id="editUploadPreview" class="upload-preview" alt="معاينة" style="object-fit:cover;width:100%;height:160px;border-radius:10px;" />
+        <div class="upload-progress" id="editUploadProgress">
+          <div class="upload-progress-track"><div class="upload-progress-bar" id="editUploadProgressBar"></div></div>
+          <div class="upload-progress-text" id="editUploadProgressText">جارٍ الرفع... 0%</div>
+        </div>
+      </div>
+      <input type="file" id="editImageFile" accept="image/*" style="display:none" onchange="handleEditImageUpload(event)" />
+      <input type="text" id="editImageUrl" class="form-input mt-2" placeholder="أو أدخل رابط الصورة..." oninput="handleEditImageUrl(this.value)" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">اسم المنتج</label>
+        <input type="text" id="editName" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">السعر (﷼)</label>
+        <input type="number" id="editPrice" class="form-input" step="0.5" min="0" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">الوصف</label>
+      <textarea id="editDesc" class="form-textarea"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">القسم</label>
+        <select id="editCat" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوسم</label>
+        <input type="text" id="editBadge" class="form-input" placeholder="مثال: جديد" />
+      </div>
+    </div>
+    <button class="btn-gold mt-2" onclick="saveEdit()">💾 حفظ التغييرات</button>
+  </div>
+</div>
+
+<!-- ========================== CONFIRM MODAL ========================== -->
+<div class="confirm-overlay" id="confirmModal">
+  <div class="confirm-box">
+    <div style="font-size:52px;margin-bottom:12px">⚠️</div>
+    <h3 style="font-size:18px;font-weight:800;margin-bottom:8px;color:var(--text-dark)">تأكيد الحذف</h3>
+    <p style="font-size:14px;color:var(--text-light);margin-bottom:24px" id="confirmMsg">هل أنت متأكد من حذف هذا العنصر؟</p>
+    <div class="flex gap-3">
+      <button class="btn-danger" style="flex:1;justify-content:center;font-size:14px" onclick="executeConfirm()">🗑️ حذف</button>
+      <button class="btn-outline" style="flex:1;justify-content:center;font-size:14px" onclick="closeConfirm()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================== JAVASCRIPT ========================== -->
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Import Firebase functions from firebase.js
+// ─────────────────────────────────────────────────────────────
+import {
+  subscribeProducts,
+  addProduct    as fbAddProduct,
+  updateProduct as fbUpdateProduct,
+  deleteProduct as fbDeleteProduct,
+} from './firebase.js';
+
+// ─────────────────────────────────────────────────────────────
+//  LOCAL CATEGORIES (kept in-memory; extend to Firestore later)
+// ─────────────────────────────────────────────────────────────
+let categories = [
+  { id: 'cat1', name: 'المقبلات',         emoji: '🥗' },
+  { id: 'cat2', name: 'المشويات',          emoji: '🥩' },
+  { id: 'cat3', name: 'الأطباق الرئيسية', emoji: '🍚' },
+  { id: 'cat4', name: 'الشوربات',          emoji: '🍲' },
+  { id: 'cat5', name: 'الحلويات',          emoji: '🍮' },
+  { id: 'cat6', name: 'المشروبات',         emoji: '☕' },
+];
+
+// ─────────────────────────────────────────────────────────────
+//  LIVE products array — populated & kept in sync by Firestore
+// ─────────────────────────────────────────────────────────────
+let products = [];
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+let currentPage      = 'menu';
+let activeCatFilter  = 'all';
+let searchQuery      = '';
+let editingProductId = null;
+let pendingImg       = '';
+let editPendingImg   = '';
+let confirmCallback  = null;
+let unsubscribeFS    = null;   // Firestore real-time listener handle
+
+// ─────────────────────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+/** Disable / enable a button with a loading spinner text */
+function setLoading(btn, isLoading, originalText = '') {
+  if (!btn) return;
+  btn.disabled = isLoading;
+  if (isLoading) {
+    btn._originalText = btn.innerHTML;
+    btn.innerHTML = '<span style="opacity:.7">⏳ جارٍ الحفظ...</span>';
+  } else {
+    btn.innerHTML = btn._originalText || originalText;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  FIRESTORE REAL-TIME LISTENER
+//  Called once on init; keeps `products` array always fresh.
+// ─────────────────────────────────────────────────────────────
+function startFirestoreListener() {
+  // Show skeleton loader
+  showLoadingState();
+
+  unsubscribeFS = subscribeProducts((err, list) => {
+    if (err) {
+      console.error('Firestore listener error:', err);
+      showToast('⚠️ خطأ في الاتصال بقاعدة البيانات', 'error');
+      hideLoadingState();
+      return;
+    }
+
+    products = list;           // replace local array with Firestore data
+    hideLoadingState();
+
+    // Re-render whatever is currently visible
+    renderMenu();
+    if (currentPage === 'admin') {
+      renderDashboard();
+      renderAdminProducts();
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  LOADING STATE (skeleton while Firestore fetches)
+// ─────────────────────────────────────────────────────────────
+function showLoadingState() {
+  const container = document.getElementById('menuSections');
+  if (!container) return;
+  container.innerHTML = `
+    <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))">
+      ${[1,2,3,4,5,6].map(() => `
+        <div style="background:#fff;border-radius:20px;border:1px solid var(--border-light);overflow:hidden">
+          <div style="height:200px;background:linear-gradient(90deg,#f0ebe3 25%,#e8e0d5 50%,#f0ebe3 75%);
+               background-size:200% 100%;animation:shimmer 1.4s infinite"></div>
+          <div style="padding:18px">
+            <div style="height:18px;background:#f0ebe3;border-radius:6px;margin-bottom:10px;animation:shimmer 1.4s infinite"></div>
+            <div style="height:13px;background:#f0ebe3;border-radius:6px;width:80%;animation:shimmer 1.4s infinite"></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function hideLoadingState() {
+  // Will be cleared by renderProducts() naturally
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PAGE SWITCHING
+// ─────────────────────────────────────────────────────────────
+window.switchPage = function(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('navMenu').classList.toggle('active', page === 'menu');
+  document.getElementById('navAdmin').classList.toggle('active', page === 'admin');
+  if (page === 'menu')  renderMenu();
+  if (page === 'admin') { renderDashboard(); renderAdminProducts(); renderCategoriesList(); }
+  window.scrollTo(0, 0);
+  closeSidebar();
+};
+
+// ─────────────────────────────────────────────────────────────
+//  SIDEBAR
+// ─────────────────────────────────────────────────────────────
+window.toggleSidebar = function() {
+  document.getElementById('adminSidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+};
+window.closeSidebar = function() {
+  document.getElementById('adminSidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+};
+function closeSidebar() { window.closeSidebar(); }
+
+// ─────────────────────────────────────────────────────────────
+//  ADMIN TABS
+// ─────────────────────────────────────────────────────────────
+window.showAdminTab = function(tab) {
+  document.querySelectorAll('.admin-panel-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btn = document.getElementById('tab-btn-' + tab);
+  if (btn) btn.classList.add('active');
+  closeSidebar();
+  if (tab === 'dashboard')  renderDashboard();
+  if (tab === 'products')   renderAdminProducts();
+  if (tab === 'categories') renderCategoriesList();
+  if (tab === 'add')        { resetForm(); populateCatSelects(); }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  MENU RENDERING
+// ─────────────────────────────────────────────────────────────
+function renderMenu() {
+  renderCategoryTabs();
+  renderProducts();
+}
+
+function renderCategoryTabs() {
+  const container = document.getElementById('categoryTabsMenu');
+  if (!container) return;
+  container.innerHTML = '';
+  container.appendChild(createCatBtn('all', '🍽️', 'الكل', activeCatFilter === 'all'));
+  categories.forEach(cat => {
+    container.appendChild(createCatBtn(cat.id, cat.emoji, cat.name, activeCatFilter === cat.id));
+  });
+}
+
+function createCatBtn(id, emoji, name, active) {
+  const btn = document.createElement('button');
+  btn.className = 'category-btn' + (active ? ' active' : '');
+  btn.innerHTML = `<span class="cat-emoji">${emoji}</span>${name}`;
+  btn.onclick = () => {
+    activeCatFilter = id;
+    renderCategoryTabs();
+    renderProducts();
+  };
+  return btn;
+}
+
+function renderProducts() {
+  const container = document.getElementById('menuSections');
+  const noResults = document.getElementById('noResults');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const q = searchQuery.toLowerCase().trim();
+  const filtered = products.filter(p => {
+    const matchSearch = !q || p.name.includes(q) || (p.desc || '').toLowerCase().includes(q);
+    const matchCat    = activeCatFilter === 'all' || p.categoryId === activeCatFilter;
+    return matchSearch && matchCat;
+  });
+
+  if (filtered.length === 0) {
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+
+  if (activeCatFilter === 'all' && !q) {
+    categories.forEach(cat => {
+      const catProducts = filtered.filter(p => p.categoryId === cat.id);
+      if (!catProducts.length) return;
+      const section = document.createElement('div');
+      section.className = 'mb-8';
+      section.innerHTML = `<div class="section-title mb-5"><span>${cat.emoji}</span> ${cat.name}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'products-grid';
+      catProducts.forEach((p, i) => grid.appendChild(createProductCard(p, i)));
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'products-grid';
+    filtered.forEach((p, i) => grid.appendChild(createProductCard(p, i)));
+    container.appendChild(grid);
+  }
+}
+
+function createProductCard(p, index) {
+  const cat  = categories.find(c => c.id === p.categoryId);
+  const card = document.createElement('div');
+  card.className = 'product-card animate-fade-in-up';
+  card.style.animationDelay = `${index * 0.06}s`;
+  card.style.opacity = '0';
+  card.onclick = () => openProductModal(p);
+  card.innerHTML = `
+    <div class="product-img-wrap">
+      <img class="product-img" src="${escHtml(p.img)}" alt="${escHtml(p.name)}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="img-fallback" style="display:none">${cat ? cat.emoji : '🍽️'}</div>
+      ${p.badge ? `<div class="product-badge">${escHtml(p.badge)}</div>` : ''}
+    </div>
+    <div class="product-body">
+      <div class="product-name">${escHtml(p.name)}</div>
+      <div class="product-desc">${escHtml(p.desc)}</div>
+      <div class="product-footer">
+        <div class="product-price">${p.price} <span>﷼</span></div>
+        ${cat ? `<div style="font-size:12px;color:var(--text-light);font-weight:600">${cat.emoji} ${escHtml(cat.name)}</div>` : ''}
+      </div>
+    </div>`;
+  return card;
+}
+
+/** Simple HTML-escape for dynamic content */
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PRODUCT DETAIL MODAL
+// ─────────────────────────────────────────────────────────────
+window.openProductModal = function(p) {
+  const cat = categories.find(c => c.id === p.categoryId);
+  document.getElementById('modalImg').src = p.img;
+  document.getElementById('modalImg').onerror = function() { this.style.display = 'none'; };
+  document.getElementById('modalName').textContent  = p.name;
+  document.getElementById('modalDesc').textContent  = p.desc;
+  document.getElementById('modalPrice').textContent = p.price + ' ﷼';
+  document.getElementById('modalCatBadge').textContent = cat ? `${cat.emoji} ${cat.name}` : '';
+  const badge = document.getElementById('modalBadge');
+  badge.textContent  = p.badge || '';
+  badge.style.display = p.badge ? 'inline-block' : 'none';
+  document.getElementById('productModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeProductModal = function() {
+  document.getElementById('productModal').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+window.closeModal = function(e) {
+  if (e.target === document.getElementById('productModal')) window.closeProductModal();
+};
+
+// ─────────────────────────────────────────────────────────────
+//  SEARCH
+// ─────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', function() {
+  searchQuery = this.value;
+  document.getElementById('searchClear').style.display = this.value ? 'block' : 'none';
+  renderProducts();
+});
+document.getElementById('searchClear').addEventListener('click', function() {
+  document.getElementById('searchInput').value = '';
+  searchQuery = '';
+  this.style.display = 'none';
+  renderProducts();
+});
+
+// ─────────────────────────────────────────────────────────────
+//  IMGBB IMAGE UPLOAD
+// ─────────────────────────────────────────────────────────────
+const IMGBB_API_KEY = "1b958a125b3fe07750d9c4bc3a3dd97d";
+
+/**
+ * Uploads an image file to ImgBB and resolves with the hosted image URL.
+ * @param {File} file - the image file selected/dropped by the user
+ * @param {(percent:number)=>void} [onProgress] - optional callback fired with 0-100 upload progress
+ * @returns {Promise<string>} the public ImgBB image URL
+ */
+function uploadImage(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      reject(new Error('يرجى اختيار ملف صورة صالح'));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`);
+
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable && typeof onProgress === 'function') {
+        onProgress(Math.round((ev.loaded / ev.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      let res = null;
+      try { res = JSON.parse(xhr.responseText); } catch (_) { /* invalid JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300 && res && res.success) {
+        resolve(res.data.url);
+      } else {
+        reject(new Error((res && res.error && res.error.message) || 'فشل رفع الصورة إلى ImgBB'));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('فشل الاتصال بـ ImgBB، تحقق من الإنترنت'));
+    xhr.send(formData);
+  });
+}
+
+/** Show/update/hide the upload progress bar for 'add' or 'edit' forms */
+function setUploadProgressUI(mode, visible, percent) {
+  const isEdit = mode === 'edit';
+  const wrap = document.getElementById(isEdit ? 'editUploadProgress'     : 'uploadProgress');
+  const bar  = document.getElementById(isEdit ? 'editUploadProgressBar'  : 'uploadProgressBar');
+  const text = document.getElementById(isEdit ? 'editUploadProgressText' : 'uploadProgressText');
+  if (!wrap) return;
+  wrap.style.display = visible ? 'block' : 'none';
+  if (bar)  bar.style.width   = (percent || 0) + '%';
+  if (text) text.textContent  = `جارٍ الرفع... ${percent || 0}%`;
+}
+
+/**
+ * Shared handler: shows an instant local preview, uploads the file to ImgBB
+ * with live progress, then stores the resulting URL as the pending image
+ * for the given form ('add' or 'edit').
+ */
+async function processImageFile(file, mode) {
+  const isEdit         = mode === 'edit';
+  const areaId          = isEdit ? 'editUploadArea'        : 'uploadArea';
+  const previewId       = isEdit ? 'editUploadPreview'      : 'uploadPreview';
+  const placeholderId   = isEdit ? 'editUploadPlaceholder'  : 'uploadPlaceholder';
+  const urlInputId      = isEdit ? 'editImageUrl'           : 'imageUrlInput';
+
+  const area        = document.getElementById(areaId);
+  const previewEl    = document.getElementById(previewId);
+  const placeholderEl = document.getElementById(placeholderId);
+  const urlInputEl   = document.getElementById(urlInputId);
+
+  if (area) area.classList.add('uploading');
+  setUploadProgressUI(mode, true, 0);
+
+  // Instant local preview while the upload is in progress
+  const localPreviewUrl = URL.createObjectURL(file);
+  if (previewEl) {
+    previewEl.src = localPreviewUrl;
+    previewEl.style.display = 'block';
+  }
+  if (placeholderEl) placeholderEl.style.display = 'none';
+
+  try {
+    const url = await uploadImage(file, (pct) => setUploadProgressUI(mode, true, pct));
+    if (isEdit) editPendingImg = url; else pendingImg = url;
+    if (previewEl) previewEl.src = url;
+    if (urlInputEl) urlInputEl.value = '';
+    showToast('✅ تم رفع الصورة بنجاح', 'success');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+    if (previewEl) previewEl.style.display = 'none';
+    if (placeholderEl) placeholderEl.style.display = 'block';
+    if (isEdit) editPendingImg = ''; else pendingImg = '';
+  } finally {
+    if (area) area.classList.remove('uploading');
+    setUploadProgressUI(mode, false, 0);
+    URL.revokeObjectURL(localPreviewUrl);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  IMAGE UPLOAD — ADD FORM
+// ─────────────────────────────────────────────────────────────
+window.handleImageUpload = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  processImageFile(file, 'add');
+};
+
+window.handleImageUrl = function(url) {
+  if (url.trim()) {
+    pendingImg = url.trim();
+    document.getElementById('uploadPreview').src = pendingImg;
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+  } else {
+    pendingImg = '';
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('uploadPlaceholder').style.display = 'block';
+  }
+};
+
+window.handleDragOver  = e => { e.preventDefault(); document.getElementById('uploadArea').classList.add('drag-over'); };
+window.handleDragLeave = ()  => document.getElementById('uploadArea').classList.remove('drag-over');
+window.handleDrop = function(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    processImageFile(file, 'add');
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  IMAGE UPLOAD — EDIT FORM
+// ─────────────────────────────────────────────────────────────
+window.handleEditImageUpload = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  processImageFile(file, 'edit');
+};
+
+window.handleEditImageUrl = function(url) {
+  if (url.trim()) {
+    editPendingImg = url.trim();
+    document.getElementById('editUploadPreview').src = editPendingImg;
+  }
+};
+
+window.handleEditDrop = function(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    processImageFile(file, 'edit');
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  CATEGORY SELECT POPULATION
+// ─────────────────────────────────────────────────────────────
+function populateCatSelects() {
+  ['pCat', 'editCat', 'adminCatFilter'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const isFilter = id === 'adminCatFilter';
+    const oldVal   = sel.value;
+    sel.innerHTML  = isFilter
+      ? '<option value="all">جميع الأقسام</option>'
+      : '<option value="">اختر القسم</option>';
+    categories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value       = c.id;
+      opt.textContent = `${c.emoji} ${c.name}`;
+      sel.appendChild(opt);
+    });
+    if (oldVal) sel.value = oldVal;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  ADD / UPDATE PRODUCT  →  Firestore
+// ─────────────────────────────────────────────────────────────
+window.submitProduct = async function(e) {
+  e.preventDefault();
+
+  const name  = document.getElementById('pName').value.trim();
+  const price = parseFloat(document.getElementById('pPrice').value);
+  const desc  = document.getElementById('pDesc').value.trim();
+  const catId = document.getElementById('pCat').value;
+  const badge = document.getElementById('pBadge').value.trim();
+  const img   = pendingImg || document.getElementById('imageUrlInput').value.trim() || getDefaultImg(catId);
+
+  if (!name || !catId || isNaN(price)) {
+    showToast('يرجى تعبئة الحقول المطلوبة', 'error');
+    return;
+  }
+
+  const submitBtn = document.querySelector('#productForm button[type="submit"]');
+  setLoading(submitBtn, true);
+
+  const payload = {
+    name,
+    description: desc,
+    price,
+    image:    img,
+    category: catId,
+    badge,
+  };
+
+  try {
+    const editId = document.getElementById('editProductId').value;
+    if (editId) {
+      await fbUpdateProduct(editId, payload);
+      showToast('✅ تم تحديث المنتج في Firestore', 'success');
+    } else {
+      await fbAddProduct(payload);
+      showToast('✅ تم إضافة المنتج إلى Firestore', 'success');
+    }
+    resetForm();
+    showAdminTab('products');
+  } catch (err) {
+    showToast('❌ فشلت العملية: ' + err.message, 'error');
+  } finally {
+    setLoading(submitBtn, false);
+  }
+};
+
+window.resetForm = function() {
+  document.getElementById('productForm').reset();
+  document.getElementById('editProductId').value = '';
+  pendingImg = '';
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadPreview').src = '';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('imageUrlInput').value = '';
+  document.getElementById('uploadArea').classList.remove('uploading');
+  setUploadProgressUI('add', false, 0);
+  document.getElementById('addFormTitle').textContent  = 'إضافة منتج جديد';
+  document.getElementById('submitBtnText').textContent = 'إضافة المنتج';
+  document.getElementById('submitBtnIcon').textContent = '✅';
+};
+function resetForm() { window.resetForm(); }
+
+function getDefaultImg(catId) {
+  const map = {
+    cat1: 'https://images.pexels.com/photos/29253301/pexels-photo-29253301.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    cat2: 'https://images.pexels.com/photos/32986489/pexels-photo-32986489.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    cat3: 'https://images.pexels.com/photos/17650198/pexels-photo-17650198.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    cat4: 'https://images.pexels.com/photos/8696758/pexels-photo-8696758.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    cat5: 'https://images.pexels.com/photos/20586597/pexels-photo-20586597.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    cat6: 'https://images.pexels.com/photos/30709483/pexels-photo-30709483.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+  };
+  return map[catId] || 'https://images.pexels.com/photos/18698240/pexels-photo-18698240.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  EDIT MODAL
+// ─────────────────────────────────────────────────────────────
+window.openEditModal = function(productId) {
+  const p = products.find(x => x.id === productId);
+  if (!p) return;
+  editingProductId = productId;
+  editPendingImg   = p.img;
+
+  populateCatSelects();
+  document.getElementById('editName').value  = p.name;
+  document.getElementById('editPrice').value = p.price;
+  document.getElementById('editDesc').value  = p.desc;
+  document.getElementById('editCat').value   = p.categoryId;
+  document.getElementById('editBadge').value = p.badge || '';
+  document.getElementById('editImageUrl').value =
+    typeof p.img === 'string' && !p.img.startsWith('data:') ? p.img : '';
+  document.getElementById('editUploadPreview').src          = p.img;
+  document.getElementById('editUploadPreview').style.display = 'block';
+  document.getElementById('editUploadPlaceholder').style.display = 'none';
+  document.getElementById('editUploadArea').classList.remove('uploading');
+  setUploadProgressUI('edit', false, 0);
+
+  document.getElementById('editModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeEditModal = function() {
+  document.getElementById('editModal').classList.remove('open');
+  document.body.style.overflow = '';
+  editingProductId = null;
+};
+
+window.saveEdit = async function() {
+  if (!editingProductId) return;
+
+  const saveBtn = document.querySelector('#editModal .btn-gold');
+  setLoading(saveBtn, true);
+
+  const payload = {
+    name:        document.getElementById('editName').value.trim(),
+    price:       parseFloat(document.getElementById('editPrice').value),
+    description: document.getElementById('editDesc').value.trim(),
+    category:    document.getElementById('editCat').value,
+    badge:       document.getElementById('editBadge').value.trim(),
+    image:       editPendingImg || document.getElementById('editImageUrl').value.trim(),
+  };
+
+  try {
+    await fbUpdateProduct(editingProductId, payload);
+    window.closeEditModal();
+    showToast('✅ تم تحديث المنتج في Firestore', 'success');
+  } catch (err) {
+    showToast('❌ فشل التحديث: ' + err.message, 'error');
+  } finally {
+    setLoading(saveBtn, false);
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  CONFIRM MODAL
+// ─────────────────────────────────────────────────────────────
+window.openConfirm = function(msg, cb) {
+  confirmCallback = cb;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').classList.add('open');
+};
+window.closeConfirm = function() {
+  document.getElementById('confirmModal').classList.remove('open');
+  confirmCallback = null;
+};
+window.executeConfirm = function() {
+  if (confirmCallback) confirmCallback();
+  window.closeConfirm();
+};
+function openConfirm(msg, cb) { window.openConfirm(msg, cb); }
+function closeConfirm()       { window.closeConfirm(); }
+
+// ─────────────────────────────────────────────────────────────
+//  DELETE PRODUCT  →  Firestore
+// ─────────────────────────────────────────────────────────────
+window.deleteProduct = function(productId) {
+  const p = products.find(x => x.id === productId);
+  openConfirm(`هل تريد حذف "${p ? escHtml(p.name) : 'هذا المنتج'}"؟`, async () => {
+    try {
+      await fbDeleteProduct(productId);
+      showToast('🗑️ تم حذف المنتج من Firestore', 'info');
+      // Firestore listener will auto-update the local array & UI
+    } catch (err) {
+      showToast('❌ فشل الحذف: ' + err.message, 'error');
+    }
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+//  ADMIN PRODUCTS LIST RENDER
+// ─────────────────────────────────────────────────────────────
+function renderAdminProducts() {
+  populateCatSelects();
+  const container = document.getElementById('adminProductsList');
+  if (!container) return;
+
+  const filterVal = document.getElementById('adminCatFilter')?.value || 'all';
+  const filtered  = filterVal === 'all'
+    ? products
+    : products.filter(p => p.categoryId === filterVal);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--text-light)">
+        <div style="font-size:48px;margin-bottom:12px;opacity:.4">📭</div>
+        <div style="font-size:15px;font-weight:600">لا توجد منتجات في هذا القسم</div>
+        <div style="font-size:13px;margin-top:6px">أضف منتجاً جديداً من تبويب "إضافة منتج"</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  filtered.forEach(p => {
+    const cat  = categories.find(c => c.id === p.categoryId);
+    const card = document.createElement('div');
+    card.className = 'admin-product-card mb-3';
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px">
+        <img class="admin-product-img" src="${escHtml(p.img)}" alt="${escHtml(p.name)}"
+          onerror="this.style.display='none'" />
+        <div style="flex:1;min-width:0">
+          <div class="admin-product-name">${escHtml(p.name)}</div>
+          <div class="admin-product-cat">${cat ? cat.emoji + ' ' + escHtml(cat.name) : '<span style="color:#ccc">بدون قسم</span>'}</div>
+          ${p.badge ? `<div style="font-size:11px;color:var(--gold-dark);font-weight:700;margin-top:2px">${escHtml(p.badge)}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          <div class="admin-product-price">${p.price} ﷼</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-outline btn-sm" onclick="openEditModal('${p.id}')">✏️ تعديل</button>
+            <button class="btn-danger  btn-sm" onclick="deleteProduct('${p.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CATEGORIES (in-memory, not Firestore)
+// ─────────────────────────────────────────────────────────────
+function renderCategoriesList() {
+  const container = document.getElementById('categoriesList');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!categories.length) {
+    container.innerHTML = '<div style="color:var(--text-light);font-size:14px">لا توجد أقسام بعد.</div>';
+    return;
+  }
+  categories.forEach(cat => {
+    const chip      = document.createElement('div');
+    chip.className  = 'cat-chip';
+    const prodCount = products.filter(p => p.categoryId === cat.id).length;
+    chip.innerHTML  = `
+      <span class="cat-chip-emoji">${cat.emoji}</span>
+      <span>${escHtml(cat.name)}</span>
+      <span style="font-size:11px;color:var(--text-light);background:var(--border-light);border-radius:50px;padding:2px 8px">${prodCount}</span>
+      <button class="cat-chip-del" onclick="deleteCategory('${cat.id}')" title="حذف">×</button>`;
+    container.appendChild(chip);
+  });
+}
+
+window.addCategory = function() {
+  const name  = document.getElementById('newCatName').value.trim();
+  const emoji = document.getElementById('newCatEmoji').value.trim() || '🍽️';
+  if (!name) { showToast('أدخل اسم القسم', 'error'); return; }
+  if (categories.find(c => c.name === name)) { showToast('القسم موجود مسبقاً', 'error'); return; }
+  categories.push({ id: 'cat_' + Date.now(), name, emoji });
+  document.getElementById('newCatName').value  = '';
+  document.getElementById('newCatEmoji').value = '';
+  renderCategoriesList();
+  populateCatSelects();
+  renderCategoryTabs();
+  showToast('✅ تم إضافة القسم', 'success');
+};
+
+window.deleteCategory = function(catId) {
+  const cat   = categories.find(c => c.id === catId);
+  const count = products.filter(p => p.categoryId === catId).length;
+  const msg   = count > 0
+    ? `حذف قسم "${cat?.name}" لن يحذف المنتجات من Firestore لكنها لن تُعرض. هل تريد المتابعة؟`
+    : `هل تريد حذف قسم "${cat?.name}"؟`;
+
+  openConfirm(msg, () => {
+    categories = categories.filter(c => c.id !== catId);
+    if (activeCatFilter === catId) activeCatFilter = 'all';
+    renderCategoriesList();
+    renderAdminProducts();
+    renderMenu();
+    renderDashboard();
+    showToast('🗑️ تم حذف القسم', 'info');
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+//  DASHBOARD
+// ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const statP = document.getElementById('statProducts');
+  const statC = document.getElementById('statCats');
+  const statF = document.getElementById('statFeatured');
+  const statA = document.getElementById('statAvgPrice');
+  if (!statP) return;
+
+  statP.textContent = products.length;
+  statC.textContent = categories.length;
+  statF.textContent = products.filter(p => p.badge).length;
+  const avg = products.length
+    ? Math.round(products.reduce((s, p) => s + p.price, 0) / products.length)
+    : 0;
+  statA.textContent = avg;
+
+  const recent = document.getElementById('recentProducts');
+  if (!recent) return;
+  const last5 = [...products].slice(-5).reverse();
+  if (!last5.length) {
+    recent.innerHTML = `<div style="color:var(--text-light);font-size:14px;text-align:center;padding:20px">
+      لا توجد منتجات بعد — أضف أول منتج من قسم الإضافة</div>`;
+    return;
+  }
+  recent.innerHTML = last5.map(p => {
+    const cat = categories.find(c => c.id === p.categoryId);
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)">
+        <img src="${escHtml(p.img)}" alt="${escHtml(p.name)}"
+          style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0"
+          onerror="this.style.display='none'" />
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:var(--text-dark)">${escHtml(p.name)}</div>
+          <div style="font-size:12px;color:var(--text-light)">${cat ? cat.emoji + ' ' + escHtml(cat.name) : '—'}</div>
+        </div>
+        <div style="font-weight:800;color:var(--gold-dark);font-size:15px;flex-shrink:0">${p.price} ﷼</div>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  FIREBASE CONNECTION STATUS INDICATOR
+// ─────────────────────────────────────────────────────────────
+function showFirebaseStatus(connected) {
+  // Append a small pill in the admin topbar once
+  let pill = document.getElementById('fb-status-pill');
+  if (!pill) {
+    const bar = document.querySelector('.admin-topbar');
+    if (!bar) return;
+    pill = document.createElement('div');
+    pill.id = 'fb-status-pill';
+    pill.style.cssText = `
+      display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
+      padding:4px 10px; border-radius:50px; transition:all .3s;`;
+    bar.querySelector('div:last-child').appendChild(pill);
+  }
+  if (connected) {
+    pill.style.background = '#e6f9f0';
+    pill.style.color      = '#1e7e4a';
+    pill.innerHTML        = '<span style="width:7px;height:7px;border-radius:50%;background:#2ecc71;display:inline-block"></span> متصل';
+  } else {
+    pill.style.background = '#fff3cd';
+    pill.style.color      = '#856404';
+    pill.innerHTML        = '<span style="width:7px;height:7px;border-radius:50%;background:#f39c12;display:inline-block"></span> غير متصل';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INIT — wire everything together
+// ─────────────────────────────────────────────────────────────
+function init() {
+  populateCatSelects();
+  renderMenu();
+  renderDashboard();
+
+  // Start Firestore real-time listener
+  try {
+    unsubscribeFS = subscribeProducts((err, list) => {
+      if (err) {
+        showFirebaseStatus(false);
+        showToast('⚠️ خطأ في قاعدة البيانات', 'error');
+        hideLoadingState();
+        return;
+      }
+      showFirebaseStatus(true);
+      products = list;
+      hideLoadingState();
+      renderMenu();
+      if (currentPage === 'admin') {
+        renderDashboard();
+        renderAdminProducts();
+      }
+    });
+  } catch (e) {
+    showFirebaseStatus(false);
+    console.error('Firebase init error:', e);
+    showToast('⚠️ لم يتم الاتصال بـ Firebase', 'error');
+  }
+
+  showLoadingState();
+}
+
+init();
+</script>
+</body>
+</html>
